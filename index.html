@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SolarGuard Pro — Interactive Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --sun:#FFB800;
+  --sun-glow:#FF8C00;
+  --solar-blue:#0a1628;
+  --solar-dark:#060d1a;
+  --solar-mid:#0f2040;
+  --panel-blue:#1a3a6e;
+  --panel-cell:#162d58;
+  --amber:#F59E0B;
+  --amber-light:#FCD34D;
+  --green:#10B981;
+  --red:#EF4444;
+  --cyan:#22D3EE;
+  --oled-bg:#050810;
+  --oled-text:#7df0b2;
+  --oled-dim:#3a7a58;
+  --card-bg:rgba(255,255,255,0.035);
+  --card-border:rgba(255,184,0,0.15);
+  --text-primary:#f0f4ff;
+  --text-secondary:#8b9dc0;
+  --radius:14px;
+}
+
+html{scroll-behavior:smooth}
+body{
+  background:var(--solar-dark);
+  color:var(--text-primary);
+  font-family:'DM Sans',sans-serif;
+  overflow-x:hidden;
+}
+
+/* ───── SCROLLBAR ───── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--solar-dark)}
+::-webkit-scrollbar-thumb{background:var(--amber);border-radius:2px}
+
+/* ───── NAV ───── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 40px;
+  background:rgba(6,13,26,0.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(255,184,0,0.1);
+}
+.nav-logo{
+  font-family:'Orbitron',monospace;
+  font-size:14px;font-weight:700;
+  color:var(--amber);letter-spacing:2px;
+}
+.nav-links{display:flex;gap:28px}
+.nav-links a{
+  color:var(--text-secondary);text-decoration:none;
+  font-size:13px;font-weight:500;letter-spacing:0.5px;
+  transition:color .25s;
+}
+.nav-links a:hover{color:var(--amber)}
+
+/* ───── HERO ───── */
+#hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  background:radial-gradient(ellipse 80% 60% at 50% 20%,rgba(255,184,0,0.07) 0%,transparent 70%),
+             var(--solar-dark);
+  padding-top:70px;
+}
+
+/* Stars */
+.stars{position:absolute;inset:0;pointer-events:none}
+.star{
+  position:absolute;border-radius:50%;
+  background:#fff;animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s);
+}
+@keyframes twinkle{0%,100%{opacity:var(--min,0.1)}50%{opacity:var(--max,0.8)}}
+
+/* Sun */
+.sun-wrap{position:relative;width:160px;height:160px;margin-bottom:10px}
+.sun{
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#fff7cc 0%,var(--sun) 40%,var(--sun-glow) 100%);
+  box-shadow:
+    0 0 40px 10px rgba(255,184,0,0.5),
+    0 0 90px 30px rgba(255,120,0,0.3),
+    0 0 160px 60px rgba(255,80,0,0.1);
+  animation:sunPulse 4s ease-in-out infinite;
+  position:relative;z-index:2;
+}
+@keyframes sunPulse{
+  0%,100%{box-shadow:0 0 40px 10px rgba(255,184,0,0.5),0 0 90px 30px rgba(255,120,0,0.3),0 0 160px 60px rgba(255,80,0,0.1)}
+  50%{box-shadow:0 0 60px 20px rgba(255,184,0,0.7),0 0 130px 50px rgba(255,120,0,0.45),0 0 200px 80px rgba(255,80,0,0.18)}
+}
+
+/* Sun rays */
+.rays{
+  position:absolute;inset:-40px;z-index:1;
+  animation:spinRays 18s linear infinite;
+}
+@keyframes spinRays{to{transform:rotate(360deg)}}
+.ray{
+  position:absolute;
+  left:50%;top:50%;
+  width:3px;height:120px;
+  background:linear-gradient(to bottom,rgba(255,184,0,0.6),transparent);
+  transform-origin:0 0;
+  border-radius:2px;
+}
+
+/* Horizon & panel scene */
+.scene{
+  position:relative;width:100%;max-width:700px;
+  margin:20px auto 0;
+}
+.ground{
+  width:100%;height:60px;
+  background:linear-gradient(to bottom,#0a1c0f,#060d08);
+  border-radius:4px 4px 0 0;
+  position:relative;overflow:hidden;
+}
+.ground::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(16,185,113,0.04) 40px,rgba(16,185,113,0.04) 41px);
+}
+
+/* Animated solar panel in hero */
+.hero-panel{
+  width:340px;margin:0 auto;
+  display:block;
+}
+.panel-svg .cell{
+  animation:cellGlow 2.5s ease-in-out infinite;
+}
+.panel-svg .cell:nth-child(2){animation-delay:.3s}
+.panel-svg .cell:nth-child(3){animation-delay:.6s}
+.panel-svg .cell:nth-child(4){animation-delay:.9s}
+.panel-svg .cell:nth-child(5){animation-delay:1.2s}
+.panel-svg .cell:nth-child(6){animation-delay:1.5s}
+@keyframes cellGlow{
+  0%,100%{fill:#162d58}50%{fill:#1f4080}
+}
+
+/* Energy flow line */
+.energy-beam{
+  position:absolute;width:4px;
+  background:linear-gradient(to bottom,var(--sun) 0%,var(--green) 100%);
+  border-radius:2px;left:50%;transform:translateX(-50%);
+  top:0;animation:energyFlow 1.5s ease-in-out infinite;
+  filter:blur(1px);
+  opacity:0.7;
+}
+@keyframes energyFlow{
+  0%{height:0;opacity:0}40%{opacity:.8}100%{height:100%;opacity:0}
+}
+
+/* Hero text */
+.hero-text{text-align:center;padding:0 20px;margin-bottom:40px}
+.hero-eyebrow{
+  font-family:'Orbitron',monospace;
+  font-size:11px;letter-spacing:4px;
+  color:var(--amber);text-transform:uppercase;
+  margin-bottom:16px;
+  animation:fadeUp .8s ease both .2s;
+}
+.hero-title{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(36px,6vw,72px);
+  font-weight:900;line-height:1.05;
+  background:linear-gradient(135deg,#fff 30%,var(--amber) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:fadeUp .8s ease both .4s;
+  margin-bottom:12px;
+}
+.hero-sub{
+  font-size:16px;color:var(--text-secondary);font-weight:300;
+  max-width:520px;margin:0 auto 32px;line-height:1.7;
+  animation:fadeUp .8s ease both .6s;
+}
+.hero-badge{
+  display:inline-flex;gap:8px;align-items:center;
+  background:rgba(255,184,0,0.1);
+  border:1px solid rgba(255,184,0,0.3);
+  border-radius:40px;padding:8px 20px;
+  font-size:13px;color:var(--amber);letter-spacing:.5px;
+  animation:fadeUp .8s ease both .8s;
+  margin-bottom:40px;
+}
+.hero-badge span{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* Scroll cue */
+.scroll-cue{
+  position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  font-size:11px;color:var(--text-secondary);letter-spacing:2px;
+  animation:fadeUp 1s ease both 1.2s;
+}
+.scroll-cue::after{
+  content:'';width:1px;height:40px;
+  background:linear-gradient(to bottom,var(--amber),transparent);
+  animation:scrollLine 1.5s ease-in-out infinite;
+}
+@keyframes scrollLine{0%,100%{transform:scaleY(1);opacity:.6}50%{transform:scaleY(1.3);opacity:1}}
+
+/* ───── SECTION SHARED ───── */
+section{padding:90px 40px;max-width:1200px;margin:0 auto}
+.section-label{
+  font-family:'Orbitron',monospace;
+  font-size:10px;letter-spacing:4px;color:var(--amber);
+  text-transform:uppercase;margin-bottom:12px;
+}
+.section-title{
+  font-family:'Orbitron',monospace;
+  font-size:clamp(26px,4vw,42px);font-weight:700;
+  line-height:1.15;margin-bottom:16px;
+}
+.section-desc{
+  color:var(--text-secondary);font-size:15px;line-height:1.8;
+  max-width:620px;margin-bottom:56px;
+}
+
+/* ───── DEMO SECTION ───── */
+#demo{
+  background:linear-gradient(180deg,var(--solar-dark) 0%,var(--solar-mid) 50%,var(--solar-dark) 100%);
+  padding:90px 0;
+}
+#demo > .inner{max-width:1200px;margin:0 auto;padding:0 40px}
+
+.demo-layout{
+  display:grid;grid-template-columns:1fr 1.2fr;gap:60px;align-items:start;
+  margin-top:56px;
+}
+@media(max-width:900px){.demo-layout{grid-template-columns:1fr}}
+
+/* OLED display mock */
+.oled-unit{
+  background:#0d1520;
+  border:1px solid rgba(255,184,0,0.2);
+  border-radius:16px;padding:28px;
+  box-shadow:0 0 60px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.oled-label{
+  font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;
+  color:var(--text-secondary);margin-bottom:16px;text-align:center;
+}
+.oled-screen{
+  background:var(--oled-bg);
+  border:2px solid #1a2a1a;
+  border-radius:6px;
+  padding:12px;
+  font-family:'DM Mono',monospace;
+  font-size:13px;line-height:1.7;
+  min-height:140px;
+  position:relative;overflow:hidden;
+  box-shadow:inset 0 0 20px rgba(0,0,0,0.8),0 0 10px rgba(16,185,113,0.05);
+}
+.oled-screen::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 21px,rgba(0,200,80,0.015) 21px,rgba(0,200,80,0.015) 22px);
+  pointer-events:none;
+}
+.oled-header{
+  color:#3af07a;font-weight:500;font-size:12px;letter-spacing:1px;
+  border-bottom:1px solid #1a3a1a;padding-bottom:5px;margin-bottom:8px;
+}
+.oled-row{display:flex;justify-content:space-between;margin-bottom:3px}
+.oled-key{color:var(--oled-dim)}
+.oled-val{color:var(--oled-text);font-weight:500}
+.oled-val.warn{color:#ff9944}
+.oled-val.danger{color:#ff4444;animation:dangerBlink 1s ease-in-out infinite}
+.oled-val.good{color:#44ff88}
+@keyframes dangerBlink{50%{opacity:.4}}
+.oled-alert{
+  margin-top:6px;color:#ff5533;font-size:11px;
+  animation:dangerBlink 1.2s ease-in-out infinite;
+}
+.oled-dots{
+  display:flex;justify-content:center;gap:4px;margin-top:10px;
+}
+.oled-dot{
+  width:6px;height:3px;border-radius:1px;
+  background:rgba(255,255,255,0.15);transition:background .2s;
+}
+.oled-dot.active{background:var(--oled-text)}
+.oled-page-name{
+  text-align:center;font-size:10px;color:var(--oled-dim);
+  margin-top:6px;letter-spacing:1px;
+}
+
+/* Buttons */
+.btn-row{
+  display:flex;gap:10px;margin-top:20px;justify-content:center;
+}
+.hw-btn{
+  flex:1;padding:14px 0;
+  background:linear-gradient(180deg,#1c2a3a,#111e2c);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:8px;
+  color:var(--text-secondary);
+  font-family:'Orbitron',monospace;
+  font-size:11px;letter-spacing:1px;
+  cursor:pointer;
+  position:relative;overflow:hidden;
+  transition:all .15s;
+  box-shadow:0 4px 12px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.08);
+  user-select:none;
+}
+.hw-btn:active,.hw-btn.pressed{
+  transform:scale(0.95) translateY(2px);
+  box-shadow:0 1px 4px rgba(0,0,0,0.5),inset 0 2px 4px rgba(0,0,0,0.4);
+  border-color:var(--amber);color:var(--amber);
+}
+.hw-btn::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 0%,rgba(255,255,255,0.06),transparent 70%);
+}
+.hw-btn-label{font-size:9px;color:var(--text-secondary);text-align:center;margin-top:5px;letter-spacing:1px;font-family:'DM Mono',monospace}
+
+/* Demo info panel */
+.demo-info{}
+.data-card{
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:12px;padding:20px;
+  margin-bottom:16px;
+  position:relative;overflow:hidden;
+  transition:border-color .3s;
+}
+.data-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--accent,var(--amber));border-radius:3px 0 0 3px;
+}
+.data-card-title{font-size:11px;letter-spacing:2px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:10px}
+.data-card-val{
+  font-family:'Orbitron',monospace;font-size:28px;font-weight:700;
+  color:var(--accent,var(--amber));line-height:1;
+}
+.data-card-unit{font-size:14px;font-weight:400;margin-left:4px;opacity:.7}
+.data-mini{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;
+}
+.data-mini-item{background:rgba(0,0,0,0.2);border-radius:8px;padding:10px}
+.data-mini-label{font-size:10px;color:var(--text-secondary);letter-spacing:1px;margin-bottom:4px}
+.data-mini-val{font-family:'DM Mono',monospace;font-size:16px;color:var(--text-primary);font-weight:500}
+.bar-wrap{margin-top:10px}
+.bar-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-bottom:5px}
+.bar-track{height:6px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.uptime-text{font-family:'DM Mono',monospace;font-size:20px;color:var(--cyan);font-weight:500}
+.signal-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.signal-bar{
+  display:flex;align-items:flex-end;gap:2px;height:20px;
+}
+.sig{width:5px;border-radius:1px;background:rgba(255,255,255,0.1);transition:background .3s}
+.sig.active{background:var(--green)}
+
+/* ───── COMPONENTS SECTION ───── */
+#components{background:var(--solar-dark)}
+.comp-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+  gap:20px;margin-top:56px;
+}
+.comp-card{
+  background:var(--card-bg);
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:var(--radius);
+  padding:24px;cursor:pointer;
+  transition:all .3s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;
+}
+.comp-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 0%,var(--glow,rgba(255,184,0,0.08)),transparent 70%);
+  opacity:0;transition:opacity .3s;
+}
+.comp-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(255,184,0,0.3);
+  box-shadow:0 20px 40px rgba(0,0,0,0.4),0 0 0 1px rgba(255,184,0,0.1);
+}
+.comp-card:hover::before{opacity:1}
+.comp-card.active{
+  border-color:var(--amber);
+  box-shadow:0 0 30px rgba(255,184,0,0.15),0 20px 40px rgba(0,0,0,0.4);
+}
+.comp-icon{
+  width:48px;height:48px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;margin-bottom:16px;
+  background:var(--ic-bg,rgba(255,184,0,0.1));
+  border:1px solid var(--ic-border,rgba(255,184,0,0.2));
+}
+.comp-name{
+  font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
+  color:var(--text-primary);letter-spacing:.5px;margin-bottom:4px;
+}
+.comp-role{font-size:12px;color:var(--amber);margin-bottom:10px}
+.comp-desc{font-size:13px;color:var(--text-secondary);line-height:1.6}
+.comp-tag{
+  display:inline-block;margin-top:10px;padding:3px 10px;
+  background:rgba(255,255,255,0.05);border-radius:20px;
+  font-size:10px;color:var(--text-secondary);letter-spacing:1px;
+}
+
+/* Component detail panel */
+.comp-detail{
+  margin-top:28px;
+  background:rgba(255,184,0,0.04);
+  border:1px solid rgba(255,184,0,0.2);
+  border-radius:14px;padding:28px;
+  display:none;animation:slideDown .3s ease;
+}
+.comp-detail.show{display:block}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.comp-detail-header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.comp-detail-icon{font-size:36px}
+.comp-detail-name{font-family:'Orbitron',monospace;font-size:22px;font-weight:700}
+.comp-detail-body{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media(max-width:700px){.comp-detail-body{grid-template-columns:1fr}}
+.detail-block h4{font-size:12px;letter-spacing:2px;color:var(--amber);text-transform:uppercase;margin-bottom:10px}
+.detail-block p{font-size:14px;color:var(--text-secondary);line-height:1.75}
+.detail-specs{list-style:none;margin-top:10px}
+.detail-specs li{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);
+  font-size:13px;color:var(--text-secondary);
+}
+.detail-specs li::before{content:'▸';color:var(--amber);font-size:10px}
+
+/* ───── PROS & CONS ───── */
+#proscons{background:linear-gradient(180deg,var(--solar-dark),var(--solar-mid) 50%,var(--solar-dark))}
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:56px}
+@media(max-width:700px){.pc-grid{grid-template-columns:1fr}}
+.pc-card{border-radius:14px;padding:32px;border:1px solid}
+.pc-card.pros{
+  background:rgba(16,185,113,0.05);
+  border-color:rgba(16,185,113,0.2);
+}
+.pc-card.cons{
+  background:rgba(239,68,68,0.05);
+  border-color:rgba(239,68,68,0.2);
+}
+.pc-title{
+  font-family:'Orbitron',monospace;font-size:16px;font-weight:700;
+  margin-bottom:24px;display:flex;align-items:center;gap:10px;
+}
+.pros .pc-title{color:var(--green)}
+.cons .pc-title{color:var(--red)}
+.pc-item{
+  display:flex;gap:14px;align-items:flex-start;margin-bottom:18px;
+  padding:14px;border-radius:8px;
+  transition:background .2s;
+}
+.pc-item:hover{background:rgba(255,255,255,0.03)}
+.pc-dot{
+  width:20px;height:20px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;margin-top:1px;
+}
+.pros .pc-dot{background:rgba(16,185,113,0.2);color:var(--green)}
+.cons .pc-dot{background:rgba(239,68,68,0.2);color:var(--red)}
+.pc-item-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:4px}
+.pc-item-desc{font-size:13px;color:var(--text-secondary);line-height:1.6}
+
+/* ───── HOW IT WORKS ───── */
+#howitworks{background:var(--solar-dark)}
+.flow-steps{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:0;margin-top:56px;position:relative;
+}
+.flow-steps::before{
+  content:'';position:absolute;
+  top:44px;left:10%;right:10%;height:1px;
+  background:linear-gradient(to right,transparent,var(--amber),transparent);
+  opacity:.3;
+}
+.flow-step{
+  text-align:center;padding:20px 16px;
+  animation:fadeUp .6s ease both;
+}
+.flow-step:nth-child(1){animation-delay:.1s}
+.flow-step:nth-child(2){animation-delay:.2s}
+.flow-step:nth-child(3){animation-delay:.3s}
+.flow-step:nth-child(4){animation-delay:.4s}
+.flow-step:nth-child(5){animation-delay:.5s}
+.flow-icon{
+  width:80px;height:80px;border-radius:50%;
+  background:rgba(255,184,0,0.08);
+  border:1px solid rgba(255,184,0,0.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;margin:0 auto 16px;
+  position:relative;z-index:1;
+  transition:all .3s;
+}
+.flow-step:hover .flow-icon{
+  background:rgba(255,184,0,0.15);
+  box-shadow:0 0 30px rgba(255,184,0,0.2);
+  transform:scale(1.1);
+}
+.flow-num{
+  position:absolute;top:-5px;right:-5px;
+  width:22px;height:22px;border-radius:50%;
+  background:var(--amber);color:#000;
+  font-size:11px;font-weight:700;font-family:'Orbitron',monospace;
+  display:flex;align-items:center;justify-content:center;
+}
+.flow-title{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:6px;letter-spacing:.5px}
+.flow-desc{font-size:12px;color:var(--text-secondary);line-height:1.6}
+
+/* ───── FOOTER ───── */
+footer{
+  text-align:center;padding:40px;
+  border-top:1px solid rgba(255,255,255,0.05);
+  color:var(--text-secondary);font-size:13px;
+}
+footer span{color:var(--amber)}
+
+/* ───── ANIMATED WIRE ───── */
+.wire-animation{
+  position:relative;overflow:visible;
+}
+.wire-pulse{
+  position:absolute;width:8px;height:8px;border-radius:50%;
+  background:var(--amber);
+  animation:wirePulse 2s linear infinite;
+  top:50%;transform:translateY(-50%);
+  box-shadow:0 0 10px var(--amber);
+}
+@keyframes wirePulse{
+  0%{left:0;opacity:0}
+  10%{opacity:1}
+  90%{opacity:1}
+  100%{left:calc(100% - 8px);opacity:0}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">☀ SolarGuard Pro</div>
+  <div class="nav-links">
+    <a href="#demo">Demo</a>
+    <a href="#components">Components</a>
+    <a href="#proscons">Pros & Cons</a>
+    <a href="#howitworks">How It Works</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="stars" id="stars"></div>
+
+  <div class="hero-text">
+    <div class="hero-eyebrow">Wireless Solar Farm Monitor</div>
+    <h1 class="hero-title">SolarGuard<br>Pro</h1>
+    <p class="hero-sub">Real-time solar panel monitoring with wireless ESP-NOW, OLED display, multi-sensor fusion, and smart wash alerts.</p>
+    <div class="hero-badge">
+      <span></span>
+      Live Monitoring System · ESP32 · ESP-NOW · OLED · 5 Sensors
+    </div>
+  </div>
+
+  <!-- Sun + rays -->
+  <div class="sun-wrap">
+    <div class="rays" id="rays"></div>
+    <div class="sun"></div>
+  </div>
+
+  <!-- Solar panel SVG scene -->
+  <div class="scene">
+    <div style="position:relative;max-width:440px;margin:0 auto">
+      <svg class="hero-panel panel-svg" viewBox="0 0 440 220" xmlns="http://www.w3.org/2000/svg">
+        <!-- Ground -->
+        <rect x="0" y="180" width="440" height="40" fill="#0a1a0f" rx="4"/>
+        <!-- Pole -->
+        <rect x="210" y="120" width="20" height="68" fill="#1a2a1a" rx="2"/>
+        <!-- Panel frame -->
+        <rect x="60" y="20" width="320" height="140" rx="6" fill="#1a3a6e" stroke="#2a4a8e" stroke-width="1.5"/>
+        <!-- Panel cells (3x2 grid) -->
+        <rect class="cell" x="74" y="32" width="92" height="58" rx="3" fill="#162d58"/>
+        <rect class="cell" x="174" y="32" width="92" height="58" rx="3" fill="#162d58"/>
+        <rect class="cell" x="274" y="32" width="92" height="58" rx="3" fill="#162d58"/>
+        <rect class="cell" x="74" y="96" width="92" height="58" rx="3" fill="#162d58"/>
+        <rect class="cell" x="174" y="96" width="92" height="58" rx="3" fill="#162d58"/>
+        <rect class="cell" x="274" y="96" width="92" height="58" rx="3" fill="#162d58"/>
+        <!-- Grid lines -->
+        <line x1="74" y1="61" x2="166" y2="61" stroke="#1e3d72" stroke-width="0.7"/>
+        <line x1="174" y1="61" x2="266" y2="61" stroke="#1e3d72" stroke-width="0.7"/>
+        <line x1="274" y1="61" x2="366" y2="61" stroke="#1e3d72" stroke-width="0.7"/>
+        <line x1="120" y1="32" x2="120" y2="90" stroke="#1e3d72" stroke-width="0.7"/>
+        <line x1="220" y1="32" x2="220" y2="90" stroke="#1e3d72" stroke-width="0.7"/>
+        <line x1="320" y1="32" x2="320" y2="90" stroke="#1e3d72" stroke-width="0.7"/>
+        <!-- Shine -->
+        <rect x="78" y="36" width="40" height="18" rx="2" fill="rgba(180,210,255,0.08)"/>
+        <!-- Sensor box on panel -->
+        <rect x="182" y="108" width="76" height="36" rx="4" fill="#0d1a2e" stroke="#FFB800" stroke-width="1"/>
+        <text x="220" y="131" text-anchor="middle" font-size="9" fill="#FFB800" font-family="monospace">ESP32 NODE</text>
+        <!-- Antenna -->
+        <line x1="246" y1="108" x2="262" y2="92" stroke="#FFB800" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="264" cy="91" r="3" fill="#FFB800" opacity="0.8">
+          <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+        <!-- Energy flow arrows -->
+        <path d="M220 155 L220 175" stroke="#10B981" stroke-width="2" marker-end="url(#arrowG)" stroke-dasharray="4 3">
+          <animate attributeName="stroke-dashoffset" values="7;0" dur="0.5s" repeatCount="indefinite"/>
+        </path>
+        <defs>
+          <marker id="arrowG" viewBox="0 0 10 6" refX="5" refY="3" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0L10 3L0 6Z" fill="#10B981"/>
+          </marker>
+        </defs>
+        <!-- Voltage output label -->
+        <text x="240" y="170" font-size="10" fill="#10B981" font-family="monospace">22.4V  91W</text>
+        <!-- Sun rays hitting panel -->
+        <line x1="120" y1="-10" x2="110" y2="32" stroke="#FFB800" stroke-width="1.5" opacity="0.5" stroke-dasharray="3 4">
+          <animate attributeName="opacity" values="0.5;0.9;0.5" dur="2s" repeatCount="indefinite"/>
+        </line>
+        <line x1="220" y1="-10" x2="215" y2="32" stroke="#FFB800" stroke-width="1.5" opacity="0.5" stroke-dasharray="3 4">
+          <animate attributeName="opacity" values="0.5;0.9;0.5" dur="2.4s" repeatCount="indefinite"/>
+        </line>
+        <line x1="320" y1="-10" x2="318" y2="32" stroke="#FFB800" stroke-width="1.5" opacity="0.5" stroke-dasharray="3 4">
+          <animate attributeName="opacity" values="0.5;0.9;0.5" dur="1.8s" repeatCount="indefinite"/>
+        </line>
+      </svg>
+    </div>
+    <div class="ground"></div>
+  </div>
+
+  <div class="scroll-cue">SCROLL</div>
+</div>
+
+<!-- DEMO SECTION -->
+<div id="demo" style="background:linear-gradient(180deg,var(--solar-dark) 0%,var(--solar-mid) 50%,var(--solar-dark) 100%);padding:90px 0">
+<div style="max-width:1200px;margin:0 auto;padding:0 40px">
+  <div class="section-label">Interactive Simulator</div>
+  <h2 class="section-title">Live System Demo</h2>
+  <p class="section-desc">Interact with the simulated OLED display below. Use the three hardware buttons to navigate through all 11 screens. Watch the sensor values update in real-time.</p>
+
+  <div class="demo-layout">
+    <!-- LEFT: OLED -->
+    <div>
+      <div class="oled-unit">
+        <div class="oled-label">DISPLAY UNIT · SSD1306 OLED 128×64</div>
+        <div class="oled-screen" id="oledScreen">
+          <!-- content injected by JS -->
+        </div>
+        <div class="oled-dots" id="oledDots"></div>
+        <div class="oled-page-name" id="oledPageName"></div>
+        <div class="btn-row">
+          <div>
+            <button class="hw-btn" id="btnPrev" onclick="pressBtn('prev')">◄ PREV</button>
+            <div class="hw-btn-label">GPIO 25</div>
+          </div>
+          <div>
+            <button class="hw-btn" id="btnNext" onclick="pressBtn('next')">NEXT ►</button>
+            <div class="hw-btn-label">GPIO 26</div>
+          </div>
+          <div>
+            <button class="hw-btn" id="btnSet" onclick="pressBtn('set')">● SET</button>
+            <div class="hw-btn-label">GPIO 27</div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--text-secondary);letter-spacing:1px">
+          ESP-NOW link · RSSI: <span id="rssiVal" style="color:var(--green)">-48 dBm</span> · Node #1
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Live data cards -->
+    <div class="demo-info">
+      <div class="data-card" style="--accent:var(--amber)">
+        <div class="data-card-title">⚡ Panel Power Output</div>
+        <div class="data-card-val" id="powerVal">—<span class="data-card-unit">W</span></div>
+        <div class="data-mini">
+          <div class="data-mini-item">
+            <div class="data-mini-label">VOLTAGE</div>
+            <div class="data-mini-val" id="voltVal">—V</div>
+          </div>
+          <div class="data-mini-item">
+            <div class="data-mini-label">CURRENT</div>
+            <div class="data-mini-val" id="currVal">—A</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-card" style="--accent:var(--red)">
+        <div class="data-card-title">🌡 Temperature</div>
+        <div class="data-card-val" id="tempVal">—<span class="data-card-unit">°C</span></div>
+        <div class="data-mini">
+          <div class="data-mini-item">
+            <div class="data-mini-label">AMBIENT</div>
+            <div class="data-mini-val" id="ambVal">—°C</div>
+          </div>
+          <div class="data-mini-item">
+            <div class="data-mini-label">IRRADIANCE</div>
+            <div class="data-mini-val" id="luxVal">— lux</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-card" style="--accent:var(--cyan)">
+        <div class="data-card-title">🌫 Dust / Soiling Index</div>
+        <div class="bar-wrap">
+          <div class="bar-label"><span>Cleanliness</span><span id="dustPct">—%</span></div>
+          <div class="bar-track"><div class="bar-fill" id="dustBar" style="width:0%;background:var(--cyan)"></div></div>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:8px" id="dustStatus">—</div>
+      </div>
+
+      <div class="data-card" style="--accent:var(--green)">
+        <div class="data-card-title">⏱ Node Uptime</div>
+        <div class="uptime-text" id="uptimeVal">00h 00m 00s</div>
+        <div class="signal-row">
+          <span style="font-size:11px;color:var(--text-secondary)">Signal:</span>
+          <div class="signal-bar" id="signalBars">
+            <div class="sig active" style="height:6px"></div>
+            <div class="sig active" style="height:10px"></div>
+            <div class="sig active" style="height:14px"></div>
+            <div class="sig active" style="height:18px"></div>
+            <div class="sig" style="height:20px"></div>
+          </div>
+          <span style="font-size:11px;color:var(--green)">STRONG</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- COMPONENTS -->
+<section id="components">
+  <div class="section-label">Hardware Breakdown</div>
+  <h2 class="section-title">System Components</h2>
+  <p class="section-desc">Tap any component to learn exactly what it does, why it was chosen, and its key specifications.</p>
+
+  <div class="comp-grid" id="compGrid"></div>
+  <div class="comp-detail" id="compDetail"></div>
+</section>
+
+<!-- PROS & CONS -->
+<section id="proscons" style="background:linear-gradient(180deg,var(--solar-dark),var(--solar-mid) 50%,var(--solar-dark));padding:90px 40px;max-width:100%;margin:0">
+<div style="max-width:1200px;margin:0 auto">
+  <div class="section-label">System Evaluation</div>
+  <h2 class="section-title">Advantages & Limitations</h2>
+  <p class="section-desc">A balanced technical review of the SolarGuard Pro architecture — strengths to build on and limitations to be aware of.</p>
+
+  <div class="pc-grid">
+    <div class="pc-card pros">
+      <div class="pc-title">✓ Advantages</div>
+      <div id="prosList"></div>
+    </div>
+    <div class="pc-card cons">
+      <div class="pc-title">✗ Limitations</div>
+      <div id="consList"></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="howitworks">
+  <div class="section-label">System Pipeline</div>
+  <h2 class="section-title">How It Works</h2>
+  <p class="section-desc">From sunlight to actionable data — the complete signal chain of SolarGuard Pro.</p>
+  <div class="flow-steps" id="flowSteps"></div>
+</section>
+
+<footer>
+  Built with ESP32 + ESP-NOW + OLED. <span>SolarGuard Pro v2.0</span> · Open Source · MIT License
+</footer>
+
+<script>
+// ───────────── STARS ─────────────
+(function(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<80;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    const sz=Math.random()*2.5+0.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*60}%;--d:${2+Math.random()*4}s;--delay:${-Math.random()*4}s;--min:${0.05+Math.random()*0.1};--max:${0.4+Math.random()*0.5}`;
+    c.appendChild(s);
+  }
+})();
+
+// ───────────── SUN RAYS ─────────────
+(function(){
+  const wrap=document.getElementById('rays');
+  for(let i=0;i<12;i++){
+    const r=document.createElement('div');
+    r.className='ray';
+    r.style.transform=`rotate(${i*30}deg)`;
+    r.style.opacity=0.3+Math.random()*0.4;
+    wrap.appendChild(r);
+  }
+})();
+
+// ───────────── SENSOR DATA SIMULATION ─────────────
+let sensorData={
+  voltage:21.8,current:4.1,power:0,
+  panelTemp:46.2,ambientTemp:32.1,
+  dustLevel:63,irradiance:74800,
+  uptimeStart:Date.now()-7800000
+};
+function jitter(v,range){return parseFloat((v+(Math.random()-0.5)*range).toFixed(2))}
+function updateSensors(){
+  sensorData.voltage=Math.max(18,Math.min(25,jitter(sensorData.voltage,0.15)));
+  sensorData.current=Math.max(0.5,Math.min(6,jitter(sensorData.current,0.08)));
+  sensorData.power=parseFloat((sensorData.voltage*sensorData.current).toFixed(1));
+  sensorData.panelTemp=Math.max(35,Math.min(72,jitter(sensorData.panelTemp,0.3)));
+  sensorData.ambientTemp=Math.max(25,Math.min(45,jitter(sensorData.ambientTemp,0.1)));
+  sensorData.dustLevel=Math.max(0,Math.min(100,jitter(sensorData.dustLevel,0.2)));
+  sensorData.irradiance=Math.max(10000,Math.min(100000,jitter(sensorData.irradiance,500)));
+  updateDataCards();
+}
+function getUptime(){
+  const s=Math.floor((Date.now()-sensorData.uptimeStart)/1000);
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+  return `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(sec).padStart(2,'0')}s`;
+}
+function updateDataCards(){
+  document.getElementById('powerVal').childNodes[0].textContent=sensorData.power.toFixed(1);
+  document.getElementById('voltVal').textContent=sensorData.voltage.toFixed(2)+'V';
+  document.getElementById('currVal').textContent=sensorData.current.toFixed(3)+'A';
+  document.getElementById('tempVal').childNodes[0].textContent=sensorData.panelTemp.toFixed(1);
+  document.getElementById('ambVal').textContent=sensorData.ambientTemp.toFixed(1)+'°C';
+  document.getElementById('luxVal').textContent=Math.round(sensorData.irradiance).toLocaleString()+' lux';
+  document.getElementById('dustPct').textContent=sensorData.dustLevel.toFixed(1)+'%';
+  document.getElementById('dustBar').style.width=sensorData.dustLevel+'%';
+  document.getElementById('dustBar').style.background=
+    sensorData.dustLevel>70?'var(--red)':sensorData.dustLevel>40?'var(--amber)':'var(--green)';
+  document.getElementById('dustStatus').textContent=
+    sensorData.dustLevel>70?'⚠ Wash required — efficiency dropping!':
+    sensorData.dustLevel>40?'Moderate soiling — monitor closely':'Panel clean — no action needed';
+  document.getElementById('uptimeVal').textContent=getUptime();
+  // RSSI
+  const rssi=-48+Math.floor((Math.random()-0.5)*4);
+  document.getElementById('rssiVal').textContent=rssi+' dBm';
+}
+
+// ───────────── OLED PAGES ─────────────
+const PAGE_NAMES=['OVERVIEW','VOLTAGE','CURRENT','POWER','TEMPERATURE','DUST INDEX','UPTIME','WASH ALERT','SET V-LOW','SET V-HIGH','SET DUST THRESH'];
+let currentPage=0, inSetMode=false;
+let setVoltLow=18.0, setVoltHigh=24.0, setDust=60.0;
+
+function renderOled(){
+  const s=sensorData;
+  const screen=document.getElementById('oledScreen');
+  let html='';
+
+  function row(k,v,cls=''){return`<div class="oled-row"><span class="oled-key">${k}</span><span class="oled-val ${cls}">${v}</span></div>`}
+
+  switch(currentPage){
+    case 0:
+      html=`<div class="oled-header">★ SOLAR OVERVIEW</div>
+${row('V:',s.voltage.toFixed(2)+'V')}
+${row('I:',s.current.toFixed(3)+'A')}
+${row('P:',s.power.toFixed(1)+'W','good')}
+${row('Tp:',s.panelTemp.toFixed(1)+'°C',s.panelTemp>60?'warn':'')}
+${row('Dust:',s.dustLevel.toFixed(0)+'%',s.dustLevel>60?'warn':'')}
+${s.dustLevel>60?'<div class="oled-alert">! WASH PANEL NOW</div>':''}`;break;
+    case 1:
+      html=`<div class="oled-header">⚡ VOLTAGE</div>
+<div style="color:var(--oled-text);font-size:26px;font-weight:500;margin:6px 0">${s.voltage.toFixed(2)}<span style="font-size:14px">V</span></div>
+${row('Low alert:',setVoltLow.toFixed(1)+'V')}
+${row('High alert:',setVoltHigh.toFixed(1)+'V')}
+${s.voltage<setVoltLow?'<div class="oled-alert">! UNDER VOLTAGE</div>':s.voltage>setVoltHigh?'<div class="oled-alert">! OVER VOLTAGE</div>':''}`;break;
+    case 2:
+      html=`<div class="oled-header">⚡ CURRENT</div>
+<div style="color:var(--oled-text);font-size:26px;font-weight:500;margin:6px 0">${s.current.toFixed(3)}<span style="font-size:14px">A</span></div>
+${row('Irradiance:',Math.round(s.irradiance).toLocaleString()+' lx')}
+${row('Status:',s.current>3?'HIGH LOAD':'NORMAL')}`;break;
+    case 3:
+      html=`<div class="oled-header">⚡ POWER OUTPUT</div>
+<div style="color:#44ff88;font-size:24px;font-weight:500;margin:6px 0">${s.power.toFixed(1)}<span style="font-size:14px">W</span></div>
+${row('Efficiency:',(s.power/100*100).toFixed(1)+'%')}
+${row('W/klux:',(s.power/(s.irradiance/1000)).toFixed(2))}`;break;
+    case 4:
+      html=`<div class="oled-header">🌡 TEMPERATURE</div>
+<div style="color:${s.panelTemp>60?'#ff7744':'var(--oled-text)'};font-size:24px;font-weight:500;margin:6px 0">${s.panelTemp.toFixed(1)}<span style="font-size:14px">°C panel</span></div>
+${row('Ambient:',s.ambientTemp.toFixed(1)+'°C')}
+${row('Status:',s.panelTemp>65?'OVER TEMP!':s.panelTemp>50?'HOT':'NORMAL',s.panelTemp>65?'danger':s.panelTemp>50?'warn':'')}`;break;
+    case 5:
+      html=`<div class="oled-header">🌫 DUST / SOILING</div>
+<div style="color:${s.dustLevel>60?'#ff7744':s.dustLevel>40?'#ffcc44':'var(--oled-text)'};font-size:28px;font-weight:500;margin:4px 0">${s.dustLevel.toFixed(0)}<span style="font-size:14px">%</span></div>
+${row('Threshold:',setDust.toFixed(0)+'%')}
+${row('Status:',s.dustLevel>=setDust?'WASH NOW':s.dustLevel>40?'MODERATE':'CLEAN',s.dustLevel>=setDust?'danger':'')}`;break;
+    case 6:
+      const up=getUptime();
+      html=`<div class="oled-header">⏱ NODE UPTIME</div>
+${row('Panel ID:','#1')}
+<div style="color:#22d3ee;font-size:15px;margin:6px 0">${up}</div>
+${row('RSSI:','-48 dBm')}
+${row('Link:','STRONG','good')}`;break;
+    case 7:
+      html=`<div class="oled-header">🧹 WASH SCHEDULE</div>
+${row('Dust idx:',s.dustLevel.toFixed(1)+'%',s.dustLevel>=setDust?'warn':'')}
+${row('Threshold:',setDust.toFixed(0)+'%')}
+${s.dustLevel>=setDust?
+`${row('Status:','WASH NOW!','danger')}
+<div class="oled-alert">Est loss: ~${(s.dustLevel*0.3).toFixed(1)}% power</div>`:
+`${row('Status:','OK','good')}
+${row('To thresh:',(setDust-s.dustLevel).toFixed(1)+'%')}`}`;break;
+    case 8:
+      html=`<div class="oled-header">SET V-LOW ALERT</div>
+<div style="color:var(--oled-text);font-size:28px;margin:8px 0">${setVoltLow.toFixed(1)}<span style="font-size:14px">V</span></div>
+<div style="color:var(--oled-dim);font-size:11px;margin-top:8px">${inSetMode?'◄PREV=Dec  NEXT=Inc►':'Press SET to adjust'}</div>`;break;
+    case 9:
+      html=`<div class="oled-header">SET V-HIGH ALERT</div>
+<div style="color:var(--oled-text);font-size:28px;margin:8px 0">${setVoltHigh.toFixed(1)}<span style="font-size:14px">V</span></div>
+<div style="color:var(--oled-dim);font-size:11px;margin-top:8px">${inSetMode?'◄PREV=Dec  NEXT=Inc►':'Press SET to adjust'}</div>`;break;
+    case 10:
+      html=`<div class="oled-header">SET DUST THRESH</div>
+<div style="color:var(--oled-text);font-size:28px;margin:8px 0">${setDust.toFixed(0)}<span style="font-size:14px">%</span></div>
+<div style="color:var(--oled-dim);font-size:11px;margin-top:8px">${inSetMode?'◄PREV=Dec  NEXT=Inc►':'Press SET to adjust'}</div>`;break;
+  }
+  screen.innerHTML=html;
+
+  // dots
+  const dots=document.getElementById('oledDots');
+  dots.innerHTML='';
+  for(let i=0;i<PAGE_NAMES.length;i++){
+    const d=document.createElement('div');
+    d.className='oled-dot'+(i===currentPage?' active':'');
+    dots.appendChild(d);
+  }
+  document.getElementById('oledPageName').textContent=PAGE_NAMES[currentPage];
+}
+
+function pressBtn(btn){
+  const isSetPage=currentPage>=8;
+  const b=document.getElementById('btn'+btn.charAt(0).toUpperCase()+btn.slice(1));
+  b.classList.add('pressed');
+  setTimeout(()=>b.classList.remove('pressed'),150);
+
+  if(btn==='set'){
+    if(isSetPage){inSetMode=!inSetMode;}
+  } else if(btn==='prev'){
+    if(inSetMode&&isSetPage){
+      if(currentPage===8) setVoltLow=Math.max(0,parseFloat((setVoltLow-0.5).toFixed(1)));
+      if(currentPage===9) setVoltHigh=Math.max(0,parseFloat((setVoltHigh-0.5).toFixed(1)));
+      if(currentPage===10) setDust=Math.max(10,setDust-5);
+    } else { currentPage=(currentPage+PAGE_NAMES.length-1)%PAGE_NAMES.length; inSetMode=false; }
+  } else if(btn==='next'){
+    if(inSetMode&&isSetPage){
+      if(currentPage===8) setVoltLow=Math.min(100,parseFloat((setVoltLow+0.5).toFixed(1)));
+      if(currentPage===9) setVoltHigh=Math.min(100,parseFloat((setVoltHigh+0.5).toFixed(1)));
+      if(currentPage===10) setDust=Math.min(100,setDust+5);
+    } else { currentPage=(currentPage+1)%PAGE_NAMES.length; inSetMode=false; }
+  }
+  renderOled();
+}
+
+// Keyboard support
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft') pressBtn('prev');
+  if(e.key==='ArrowRight') pressBtn('next');
+  if(e.key==='Enter'||e.key===' ') pressBtn('set');
+});
+
+// ───────────── COMPONENTS DATA ─────────────
+const components=[
+  {
+    id:'ina226',name:'INA226',role:'Voltage & Current Sensor',
+    icon:'⚡',icbg:'rgba(245,158,11,0.12)',icborder:'rgba(245,158,11,0.25)',
+    glow:'rgba(245,158,11,0.12)',
+    tag:'I2C · 0x40',
+    desc:'High-side power monitor with 16-bit precision for accurate panel measurements.',
+    why:'Chosen for its high accuracy (0.1% error), 16-bit ADC resolution, and ability to measure both voltage and current in one IC over the shared I2C bus.',
+    how:'Sits between the panel positive terminal and the load. A tiny 10mΩ shunt resistor creates a micro-voltage drop proportional to current. INA226 measures both the shunt drop and bus voltage, then reports over I2C.',
+    specs:['16-bit ADC resolution','±0.1% FSR accuracy','26V max bus voltage','±81.92mV shunt voltage range','Up to 2048 sample averaging','I2C 400kHz fast mode']
+  },
+  {
+    id:'ds18b20',name:'DS18B20',role:'Panel Surface Temperature',
+    icon:'🌡',icbg:'rgba(239,68,68,0.1)',icborder:'rgba(239,68,68,0.2)',
+    glow:'rgba(239,68,68,0.1)',
+    tag:'OneWire · GPIO 5',
+    desc:'Waterproof digital thermometer mounted directly on the panel back surface.',
+    why:'Solar panels lose ~0.5% efficiency per °C above 25°C. Knowing panel temperature lets us flag overheating and correlate power loss to heat. DS18B20 is waterproof, parasite-powered, and needs only one GPIO.',
+    how:'Uses the 1-Wire protocol — power, ground, and data on three wires (or just two with parasite power). Internally converts temperature to a 12-bit digital value with ±0.5°C accuracy. Multiple sensors can share one GPIO wire.',
+    specs:['±0.5°C accuracy (-10°C to +85°C)','9 to 12-bit resolution','OneWire protocol (1 GPIO)','Supports parasite power mode','Range: -55°C to +125°C','64-bit unique ROM address']
+  },
+  {
+    id:'dht22',name:'DHT22',role:'Ambient Temp & Humidity',
+    icon:'💧',icbg:'rgba(34,211,238,0.1)',icborder:'rgba(34,211,238,0.2)',
+    glow:'rgba(34,211,238,0.1)',
+    tag:'Digital · GPIO 4',
+    desc:'Capacitive humidity sensor combined with a thermistor for ambient air conditions.',
+    why:'Ambient temperature and humidity affect how the solar inverter runs and how quickly dust adheres to the panel. High humidity accelerates dust cementation. This data helps optimize wash scheduling.',
+    how:'Contains a capacitive polymer humidity sensor and thermistor. Every 2 seconds it outputs a 40-bit serial packet containing 16-bit humidity + 16-bit temperature + 8-bit checksum, readable on any GPIO.',
+    specs:['±0.5°C temperature accuracy','±2–5% humidity accuracy','0–100% RH range','-40°C to 80°C temperature range','2-second minimum read interval','Single-wire serial protocol']
+  },
+  {
+    id:'bh1750',name:'BH1750',role:'Solar Irradiance Sensor',
+    icon:'☀',icbg:'rgba(255,184,0,0.12)',icborder:'rgba(255,184,0,0.25)',
+    glow:'rgba(255,184,0,0.12)',
+    tag:'I2C · 0x23',
+    desc:'Digital ambient light sensor measuring lux to proxy solar irradiance levels.',
+    why:'Irradiance tells us how much sunlight is actually hitting the panel. If irradiance is high but output is low, the panel has a problem. We can compute W/klux efficiency ratios and detect shading, dust, or failure.',
+    how:'Contains a photo-diode array with a spectral response close to the human eye. Converts light to current, then to a 16-bit digital lux value over I2C. Shares the bus with INA226 at address 0x23.',
+    specs:['1–65535 lux range','±20% accuracy','16-bit resolution','I2C interface (shared bus)','Continuous or one-shot modes','No external components needed']
+  },
+  {
+    id:'gp2y1010',name:'GP2Y1010',role:'Dust / Soiling Sensor',
+    icon:'🌫',icbg:'rgba(139,92,246,0.1)',icborder:'rgba(139,92,246,0.2)',
+    glow:'rgba(139,92,246,0.1)',
+    tag:'Analog · GPIO 34',
+    desc:'Optical particle counter that measures dust density in front of the panel surface.',
+    why:'Dust on panels is the #1 cause of performance loss — up to 30% in dusty regions. This sensor creates a 0–100% soiling index, triggering wash alerts when efficiency drops below acceptable thresholds.',
+    how:'Pulses an IR LED for 320µs. Scattered IR light from dust particles hits a phototransistor. The output voltage (0–3.3V) is proportional to dust density. An analog read on GPIO 34 converts this to a percentage.',
+    specs:['Detects particles ≥0.8µm','Analog voltage output (0–3.3V)','320µs LED pulse width','150Ω LED current limit resistor','220µF filter capacitor required','Pulse control via GPIO 16']
+  },
+  {
+    id:'esp32tx',name:'ESP32 (TX)',role:'Sensor Node MCU',
+    icon:'📡',icbg:'rgba(16,185,113,0.1)',icborder:'rgba(16,185,113,0.2)',
+    glow:'rgba(16,185,113,0.1)',
+    tag:'ESP-NOW Transmitter',
+    desc:'Xtensa dual-core 240MHz MCU running the sensor node firmware at the panel.',
+    why:'ESP32 integrates Wi-Fi, Bluetooth, 18 ADC channels, I2C, and OneWire in one chip. Its ESP-NOW protocol creates a peer-to-peer link that consumes <10ms of radio time — perfect for battery-powered nodes.',
+    how:'Reads all 5 sensors every 5 seconds, assembles a compact SolarData packet, and blasts it over ESP-NOW to the receiver MAC address. Can enter light sleep between sends, reducing current from 160mA to 2mA.',
+    specs:['Xtensa LX6 dual-core 240MHz','520KB SRAM, 4MB Flash','ESP-NOW: up to 200m range','18× 12-bit ADC channels','Wi-Fi 802.11 b/g/n','Light sleep: ~2mA deep sleep: ~10µA']
+  },
+  {
+    id:'esp32rx',name:'ESP32 (RX)',role:'Display Unit MCU',
+    icon:'🖥',icbg:'rgba(16,185,113,0.1)',icborder:'rgba(16,185,113,0.2)',
+    glow:'rgba(16,185,113,0.1)',
+    tag:'ESP-NOW Receiver',
+    desc:'Second ESP32 acting as receiver, rendering the OLED display and handling 3 buttons.',
+    why:'Using a separate ESP32 for the display unit keeps the sensor node lightweight. The receiver uses NVS flash to persist user-configured alert thresholds across reboots.',
+    how:'Registers an ESP-NOW receive callback. On each packet arrival, it copies sensor data to RAM and re-renders the OLED. Buttons trigger GPIO interrupts with debouncing. Settings are written to NVS (non-volatile storage) on SET confirm.',
+    specs:['Same ESP32 chip as TX node','NVS flash for persistent settings','GPIO interrupt buttons (3×)','I2C master for OLED display','10-second offline detection','Renders 11 screens at 4Hz']
+  },
+  {
+    id:'oled',name:'SSD1306 OLED',role:'128×64 OLED Display',
+    icon:'📟',icbg:'rgba(34,211,238,0.1)',icborder:'rgba(34,211,238,0.2)',
+    glow:'rgba(34,211,238,0.1)',
+    tag:'I2C · 0x3C',
+    desc:'0.96"–1.3" monochrome OLED with 128×64 pixels, driven by Adafruit SSD1306 library.',
+    why:'OLEDs are self-emissive (no backlight needed), ultra-thin, and readable in direct sunlight. At 0.5mA idle and 20mA active, they are far more power-efficient than TFT LCDs for a panel-mounted display.',
+    how:'Connected to ESP32 via I2C (SDA GPIO 21, SCL GPIO 22). The Adafruit GFX library provides text, shapes, and pixel primitives. Adafruit SSD1306 drives the display at up to 400kHz refresh.',
+    specs:['128×64 pixel resolution','I2C interface (400kHz)','Address: 0x3C (solder for 0x3D)','3.3V or 5V compatible','~0.5mA idle, ~20mA active','Viewing angle: >160°']
+  }
+];
+
+function buildComponents(){
+  const grid=document.getElementById('compGrid');
+  components.forEach((c,i)=>{
+    const el=document.createElement('div');
+    el.className='comp-card';
+    el.style.setProperty('--glow',c.glow);
+    el.style.animationDelay=(i*0.07)+'s';
+    el.innerHTML=`
+      <div class="comp-icon" style="--ic-bg:${c.icbg};--ic-border:${c.icborder}">${c.icon}</div>
+      <div class="comp-name">${c.name}</div>
+      <div class="comp-role">${c.role}</div>
+      <div class="comp-desc">${c.desc}</div>
+      <div class="comp-tag">${c.tag}</div>`;
+    el.onclick=()=>showComp(c,el);
+    grid.appendChild(el);
+  });
+}
+
+function showComp(c,el){
+  document.querySelectorAll('.comp-card').forEach(x=>x.classList.remove('active'));
+  el.classList.add('active');
+  const d=document.getElementById('compDetail');
+  d.classList.add('show');
+  d.innerHTML=`
+    <div class="comp-detail-header">
+      <div class="comp-detail-icon">${c.icon}</div>
+      <div>
+        <div class="comp-detail-name">${c.name}</div>
+        <div style="color:var(--amber);font-size:13px">${c.role} · ${c.tag}</div>
+      </div>
+    </div>
+    <div class="comp-detail-body">
+      <div class="detail-block">
+        <h4>Why This Component?</h4>
+        <p>${c.why}</p>
+        <h4 style="margin-top:20px">How It Works</h4>
+        <p>${c.how}</p>
+      </div>
+      <div class="detail-block">
+        <h4>Key Specifications</h4>
+        <ul class="detail-specs">${c.specs.map(s=>`<li>${s}</li>`).join('')}</ul>
+      </div>
+    </div>`;
+  d.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ───────────── PROS & CONS ─────────────
+const pros=[
+  {t:'No Wi-Fi Router Needed',d:'ESP-NOW is a peer-to-peer protocol that works completely without any network infrastructure — perfect for remote solar farms with no internet.'},
+  {t:'Long Wireless Range',d:'Up to 200m line-of-sight between sensor node and display unit — covers large solar farms without cable runs.'},
+  {t:'Multi-Sensor Fusion',d:'Five dedicated sensors (voltage, current, temperature, irradiance, dust) provide rich, correlated data that a single sensor could never offer.'},
+  {t:'Self-Powered Node',d:'The sensor node runs on its own mini solar panel + 18650 LiPo, making it completely wire-free at the panel end.'},
+  {t:'Smart Wash Alerts',d:'Dust index + threshold comparison automatically tells you when to wash, reducing unnecessary maintenance visits and maximising output.'},
+  {t:'Persistent Settings',d:'Alert thresholds saved to NVS flash survive power cycles — no reconfiguration needed after a reboot.'},
+  {t:'Open Source & Cheap',d:'Built on commodity ESP32 modules (~$3), common sensors, and Arduino ecosystem. Total BOM under $25 per node.'},
+];
+const cons=[
+  {t:'Limited to ~200m Range',d:'ESP-NOW range drops significantly through walls or obstructions. Very large farms need repeater nodes or a different protocol like LoRa.'},
+  {t:'No Cloud / Remote Access',d:'As designed, data stays local. Adding MQTT + Wi-Fi or LoRaWAN for remote monitoring requires significant additional work.'},
+  {t:'GP2Y1010 Accuracy',d:'The dust sensor provides an index, not a calibrated dust density. It requires manual calibration and can drift over time.'},
+  {t:'One-Way Data Flow',d:'The transmitter only sends; the display only receives. No commands can be sent back to the panel node (e.g. to reset remotely).'},
+  {t:'No Historical Logging',d:'Without an SD card or cloud backend, all data is ephemeral. A power cycle loses all history.'},
+  {t:'ESP32 ADC Non-Linearity',d:'The ESP32 ADC (used for the dust sensor) has known non-linearity around mid-range. Calibration curves or external ADCs mitigate this.'},
+  {t:'Single Panel per Node',d:'Each sensor node monitors one panel only. Multi-panel farms need one node per panel, which increases cost proportionally.'},
+];
+
+function buildProscons(){
+  const pl=document.getElementById('prosList');
+  const cl=document.getElementById('consList');
+  pros.forEach((p,i)=>{
+    pl.innerHTML+=`<div class="pc-item" style="animation:fadeUp .5s ease both ${i*.07+.1}s">
+      <div class="pc-dot">✓</div>
+      <div><div class="pc-item-title">${p.t}</div><div class="pc-item-desc">${p.d}</div></div></div>`;
+  });
+  cons.forEach((c,i)=>{
+    cl.innerHTML+=`<div class="pc-item" style="animation:fadeUp .5s ease both ${i*.07+.1}s">
+      <div class="pc-dot">✗</div>
+      <div><div class="pc-item-title">${c.t}</div><div class="pc-item-desc">${c.d}</div></div></div>`;
+  });
+}
+
+// ───────────── HOW IT WORKS ─────────────
+const steps=[
+  {icon:'☀',n:'1',t:'Solar Energy',d:'Sunlight hits the panel. INA226 reads voltage and current via shunt resistor.'},
+  {icon:'📡',n:'2',t:'Sensor Fusion',d:'DS18B20, DHT22, BH1750, and GP2Y1010 capture temperature, humidity, light, and dust.'},
+  {icon:'🔗',n:'3',t:'ESP-NOW TX',d:'ESP32 assembles a 40-byte SolarData packet and broadcasts over ESP-NOW every 5 seconds.'},
+  {icon:'📻',n:'4',t:'Wireless RX',d:'Receiver ESP32 captures the packet, validates it, and stores data in RAM.'},
+  {icon:'📟',n:'5',t:'OLED Display',d:'11 screens rendered at 4Hz. Buttons let the user navigate, configure alerts, and save to flash.'},
+];
+function buildFlow(){
+  const f=document.getElementById('flowSteps');
+  steps.forEach(s=>{
+    f.innerHTML+=`<div class="flow-step">
+      <div class="flow-icon">${s.icon}<div class="flow-num">${s.n}</div></div>
+      <div class="flow-title">${s.t}</div>
+      <div class="flow-desc">${s.d}</div>
+    </div>`;
+  });
+}
+
+// ───────────── INIT ─────────────
+buildComponents();
+buildProscons();
+buildFlow();
+updateSensors();
+renderOled();
+
+setInterval(()=>{updateSensors();renderOled();},2000);
+</script>
+</body>
+</html>
