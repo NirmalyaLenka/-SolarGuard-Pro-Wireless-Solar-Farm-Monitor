@@ -304,6 +304,31 @@ cd solar-monitor
 
 ---
 
+## Skills & technologies
+
+`Arduino/C++` · `HTML/CSS`
+
+
+## Repository structure
+
+Key files and folders (not exhaustive):
+
+- `LIBRARIES.md`
+- `README.md`
+- `TROUBLESHOOTING.md`
+- `index.html`
+- `platformio.ini`
+- `receiver_schematic.md`
+- `solar_monitor.ino`
+- `transmitter.ino`
+- `transmitter_schematic.md`
+
+
+## How it works
+
+The main firmware sketch is `solar_monitor.ino`. Open it in Arduino IDE, verify the board, pin mapping and library requirements, then compile and upload. Test hardware behaviour on the real circuit before relying on it.
+
+
 ## Maintenance & Audit
 
 - **Audit date:** 10 November 2026
