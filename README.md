@@ -208,6 +208,8 @@ Install via Arduino Library Manager or PlatformIO:
 
 **Build-layout limitation:** `platformio.ini` filters for `solar_monitor.ino` and `transmitter/transmitter.ino` under PlatformIO's default `src/` directory, but the committed sketches are `solar_monitor.ino` and `transmitter.ino` at the repository root. The PlatformIO build/upload commands are therefore not verified and are not expected to work against this tree without a separate layout/configuration correction. No source files were moved in this maintenance pass.
 
+**Arduino IDE staging:** The repository root contains two different `.ino` files, not a single Arduino sketch. In a separate local working copy, create `solar_monitor/solar_monitor.ino` by copying the root `solar_monitor.ino`, and create `transmitter/transmitter.ino` by copying the root `transmitter.ino`. Open and build each sketch from its own matching folder, and install the libraries listed in `LIBRARIES.md`. These are local staging copies only; no tracked source file is moved by this guide.
+
 ### Step 1: Find Receiver MAC address
 Flash this sketch to the **receiver** ESP32 first and read Serial Monitor:
 ```cpp
@@ -231,8 +233,8 @@ uint8_t receiverMAC[] = {0xA4, 0xCF, 0x12, 0x34, 0x56, 0x78};
 ```
 
 ### Step 3: Flash both boards
-1. Flash `solar_monitor.ino` → Receiver (display unit)
-2. Flash `transmitter.ino` → Transmitter (sensor node)
+1. Open the local `solar_monitor/solar_monitor.ino` copy and flash it to the receiver/display ESP32.
+2. Open the local `transmitter/transmitter.ino` copy and flash it to the sensor-node ESP32.
 
 ### Step 4: Power up & enjoy!
 The receiver will show "Waiting for node..." until the first packet arrives.
