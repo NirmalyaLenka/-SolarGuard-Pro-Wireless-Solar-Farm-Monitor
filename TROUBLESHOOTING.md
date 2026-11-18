@@ -61,14 +61,9 @@ The BH1750 saturates at ~65535 lux; for high irradiance, use `ONE_TIME_HIGH_RES_
 
 ---
 
-## 🔄 Factory Reset
+## Factory reset
 
-To reset all saved thresholds to defaults:
-1. Hold **SET** button while powering on the receiver.
-2. The OLED will display "RESET TO DEFAULTS" for 2 seconds.
-3. Release button — defaults are restored and saved.
-
-*(Add this to `setup()` if desired — check `digitalRead(BTN_SET) == LOW` before loading prefs)*
+The checked-in receiver firmware loads alert thresholds from ESP32 Preferences, but it does **not** implement the documented hold-SET-at-boot reset flow or a `RESET TO DEFAULTS` screen. Do not rely on that button sequence to clear saved values. A reset mechanism would require a separate, reviewed firmware change; no reset procedure is currently provided.
 
 ---
 
