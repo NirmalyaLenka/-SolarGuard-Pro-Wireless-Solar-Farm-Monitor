@@ -41,10 +41,10 @@
 | Feature | Details |
 |---------|---------|
 | 🔋 Voltage monitoring | Real-time panel voltage with low/high alerts |
-| ⚡ Current & Power | True current via INA226 Hall-effect shunt |
-| 🌡️ Dual temperature | Panel surface (DS18B20) + ambient (DHT22) |
-| 💡 Irradiance | Lux measurement via BH1750 light sensor |
-| 🌫️ Dust/Soiling index | GP2Y1010 optical dust sensor (0–100%) |
+| ⚡ Current & Power | Voltage and current measured by INA226 with an external shunt resistor; calibrate for the installed shunt |
+| 🌡️ Temperature | Panel surface (DS18B20) and ambient temperature (DHT22); humidity is read but not included in telemetry |
+| 💡 Light level | BH1750 light measurement in lux; this is not calibrated solar irradiance |
+| 🌫️ Soiling estimate | Experimental 0–100 index derived from GP2Y1010 analog output; not a calibrated dust measurement |
 | 🧹 Wash alert | Auto alert when soiling exceeds threshold |
 | ⏱️ Uptime tracking | Panel node uptime displayed in d/h/m/s |
 | 📡 Wireless | ESP-NOW (peer-to-peer, no Wi-Fi router needed) |
@@ -57,26 +57,16 @@
 
 ## 🗂️ Repository Structure
 
-```
-solar-monitor/
-├── src/
-│   ├── solar_monitor.ino       # RECEIVER: display unit firmware
-│   └── transmitter/
-│       └── transmitter.ino     # TRANSMITTER: sensor node firmware
-├── schematics/
-│   ├── receiver_schematic.md   # Display unit wiring diagram
-│   └── transmitter_schematic.md# Sensor node wiring diagram
-├── docs/
-│   ├── CALIBRATION.md          # Sensor calibration guide
-│   ├── MULTI_NODE.md           # Multi-panel setup guide
-│   └── TROUBLESHOOTING.md      # Common issues and fixes
-├── lib/
-│   └── LIBRARIES.md            # Required libraries list
-├── platformio.ini              # PlatformIO config (optional)
-└── README.md
-```
+The checked-in files are at the repository root; the directory tree shown below reflects the current checkout, not a proposed layout.
 
----
+- `solar_monitor.ino` — receiver/display firmware
+- `transmitter.ino` — transmitter/sensor-node firmware
+- `platformio.ini` — two PlatformIO environments; its source filters currently expect files under `src/`, which does not match the checked-in root-level sketches
+- `receiver_schematic.md` and `transmitter_schematic.md` — wiring references
+- `LIBRARIES.md` — dependency list
+- `TROUBLESHOOTING.md` — troubleshooting and calibration notes
+- `index.html` — browser companion page
+- `README.md` — this guide
 
 ## 🛒 Hardware BOM (Bill of Materials)
 
@@ -216,6 +206,8 @@ Install via Arduino Library Manager or PlatformIO:
 
 ## 🚀 Setup & Flashing
 
+**Build-layout limitation:** `platformio.ini` filters for `solar_monitor.ino` and `transmitter/transmitter.ino` under PlatformIO's default `src/` directory, but the committed sketches are `solar_monitor.ino` and `transmitter.ino` at the repository root. The PlatformIO build/upload commands are therefore not verified and are not expected to work against this tree without a separate layout/configuration correction. No source files were moved in this maintenance pass.
+
 ### Step 1: Find Receiver MAC address
 Flash this sketch to the **receiver** ESP32 first and read Serial Monitor:
 ```cpp
@@ -266,7 +258,7 @@ The `dustVoltToPercent()` function uses an empirical formula. For best accuracy:
 
 ## 📡 Multi-Panel Support
 
-To monitor multiple panels, flash multiple transmitter nodes, each with a unique `NODE_ID`. The receiver currently displays one panel at a time; see `docs/MULTI_NODE.md` for implementing a panel carousel.
+The current receiver stores a single `SolarData` packet in `rxData`; it does not maintain a table or carousel of separate nodes. `NODE_ID` is transmitted and displayed, but multiple transmitters are not independently tracked by the current receiver UI. Treat this as a single-node prototype until multi-node storage, selection, and testing are implemented. The referenced `docs/MULTI_NODE.md` file is not present in the checked-in repository.
 
 ---
 
@@ -279,6 +271,17 @@ To monitor multiple panels, flash multiple transmitter nodes, each with a unique
 | Receiver + OLED | ~90 mA |
 
 Self-powered transmitter: a 5W solar panel + 3000mAh 18650 will run continuously.
+
+---
+
+## Known Limitations
+
+- `receiverMAC` in `transmitter.ino` is a placeholder of all `0xFF` bytes; configure the intended receiver address before relying on delivery.
+- The PlatformIO source paths do not match the root-level sketch files, as noted above.
+- The soiling percentage is based on an empirical formula and is not a calibrated measurement of panel dirt or lost energy.
+- The display's power/irradiance-derived value is only a rough proxy, not a validated panel-efficiency calculation.
+- The DHT22 humidity value is read but is not part of the transmitted `SolarData` structure.
+- No firmware build or physical sensor/link test was performed as part of this documentation review.
 
 ---
 
@@ -308,25 +311,6 @@ cd solar-monitor
 
 `Arduino/C++` · `HTML/CSS`
 
-
-## Repository structure
-
-Key files and folders (not exhaustive):
-
-- `LIBRARIES.md`
-- `README.md`
-- `TROUBLESHOOTING.md`
-- `index.html`
-- `platformio.ini`
-- `receiver_schematic.md`
-- `solar_monitor.ino`
-- `transmitter.ino`
-- `transmitter_schematic.md`
-
-
-## How it works
-
-The main firmware sketch is `solar_monitor.ino`. Open it in Arduino IDE, verify the board, pin mapping and library requirements, then compile and upload. Test hardware behaviour on the real circuit before relying on it.
 
 
 ## Maintenance & Audit
